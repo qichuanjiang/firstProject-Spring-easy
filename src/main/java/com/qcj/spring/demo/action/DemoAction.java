@@ -4,7 +4,7 @@ import com.qcj.spring.demo.service.IDemoService;
 import com.qcj.spring.framework.annotation.Autowired;
 import com.qcj.spring.framework.annotation.Controller;
 import com.qcj.spring.framework.annotation.RequestParam;
-import com.qcj.spring.framework.annotation.ResquestMapping;
+import com.qcj.spring.framework.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,12 +13,12 @@ import javax.servlet.http.HttpServletResponse;
  * Created by qcj on 2019-09-09
  */
 @Controller
-@ResquestMapping("/demo")
+@RequestMapping("/demo")
 public class DemoAction {
     @Autowired
     private IDemoService demoService;
 
-    @ResquestMapping("/query.json")
+    @RequestMapping("/query.json")
     public void query(HttpServletRequest request, HttpServletResponse response, @RequestParam("name") String name){
 
         System.out.println(demoService.get(name));
@@ -28,7 +28,7 @@ public class DemoAction {
             e.printStackTrace();
         }*/
     }
-    @ResquestMapping("/edit.json")
+    @RequestMapping("/edit.json")
     public void query(HttpServletRequest request, HttpServletResponse response, @RequestParam("id") Integer id){
 
     }

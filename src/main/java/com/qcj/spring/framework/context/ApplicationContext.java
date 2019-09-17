@@ -13,6 +13,7 @@ import com.qcj.spring.framework.core.BeanFactory;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -52,8 +53,8 @@ public class ApplicationContext implements BeanFactory {
         //依赖注入
         doAutowired();
 
-        DemoAction demoAction = (DemoAction) getBean("demoAction");
-        demoAction.query(null,null,"我叫祁川江");
+ /*       DemoAction demoAction = (DemoAction) getBean("demoAction");
+        demoAction.query(null,null,"我叫祁川江");*/
     }
 
     private void doAutowired() {
@@ -174,5 +175,16 @@ public class ApplicationContext implements BeanFactory {
             e.printStackTrace();
         }
         return instance;
+    }
+
+
+    public int getBeanDefinitionCount() {
+        return this.beanDefinitionMap.size();
+    }
+    public String[] getBeanDefinitionNames() {
+        return this.beanDefinitionMap.keySet().toArray(new String[0]);
+    }
+    public Properties getConfig(){
+        return this.beanDefinitionReader.getConfig();
     }
 }
