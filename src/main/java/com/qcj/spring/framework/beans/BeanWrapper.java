@@ -7,6 +7,7 @@ import com.qcj.spring.framework.core.FactoryBean;
  */
 public class BeanWrapper extends FactoryBean {
 
+
     //还会用到 观察者 模式
     //1、支持事件响应，会有一个监听
     private BeanPostProcessor beanPostProcessor;
@@ -37,4 +38,5 @@ public class BeanWrapper extends FactoryBean {
     public Class<?> getWrapperClass(){
         return this.wrapperInstance.getClass();
     }
+
 }

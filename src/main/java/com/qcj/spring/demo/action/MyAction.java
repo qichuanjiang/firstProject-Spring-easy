@@ -29,9 +29,10 @@ public class MyAction {
         return out(response,result);
     }
     @RequestMapping("/add*.json")
-    public QModelAndView add(HttpServletRequest request, HttpServletResponse response, @RequestParam("name") Integer name){
-        System.out.println(String.valueOf(name));
-        return out(response,String.valueOf(name));
+    public QModelAndView add(HttpServletRequest request, HttpServletResponse response, @RequestParam("name") String name){
+        String result = demoService.get(name);
+        System.out.println(result);
+        return out(response,result);
     }
     @RequestMapping("/edit.json")
     public QModelAndView edit(HttpServletRequest request, HttpServletResponse response, @RequestParam("name") String name){

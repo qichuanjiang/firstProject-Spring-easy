@@ -1,13 +1,18 @@
 package com.qcj.spring.framework.context;
 
-import com.qcj.spring.demo.action.DemoAction;
 import com.qcj.spring.framework.annotation.Autowired;
 import com.qcj.spring.framework.annotation.Controller;
 import com.qcj.spring.framework.annotation.Service;
+import com.qcj.spring.framework.aop.CglibProxy;
+import com.qcj.spring.framework.aop.JdkProxy;
+import com.qcj.spring.framework.aop.QAopProxy;
+import com.qcj.spring.framework.aop.config.QAopConfig;
+import com.qcj.spring.framework.aop.support.QAdvisedSupport;
 import com.qcj.spring.framework.beans.BeanDefinition;
 import com.qcj.spring.framework.beans.BeanPostProcessor;
 import com.qcj.spring.framework.beans.BeanWrapper;
 import com.qcj.spring.framework.context.support.BeanDefinitionReader;
+import com.qcj.spring.framework.context.support.DefaultListableBeanFactory;
 import com.qcj.spring.framework.core.BeanFactory;
 
 import java.lang.reflect.Field;
@@ -19,14 +24,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by qcj on 2019-09-10
  */
-public class ApplicationContext implements BeanFactory {
+public class ApplicationContext extends DefaultListableBeanFactory implements BeanFactory {
 
     private String[] configLocations;
 
     private BeanDefinitionReader beanDefinitionReader;
-
-    //ioc容器，保存配置信息
-    private Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<String, BeanDefinition>();
 
     //用来保证bean单例模式
     private Map<String, Object> beanCacheMap = new ConcurrentHashMap<String, Object>();
@@ -61,7 +63,7 @@ public class ApplicationContext implements BeanFactory {
         for(Map.Entry<String,BeanDefinition> beanDefinitionEntry : this.beanDefinitionMap.entrySet()){
             String beanName = beanDefinitionEntry.getKey();
             if(!beanDefinitionEntry.getValue().isLazyInit()){
-                getBean(beanName);
+               getBean(beanName);
             }
         }
         /*for(Map.Entry<String,BeanWrapper> beanWrapperEntry : this.beanWrapperMap.entrySet()){
@@ -146,12 +148,12 @@ public class ApplicationContext implements BeanFactory {
             if(null == instance){
                 return null;
             }
+            populateBean(beanName,instance);
             beanPostProcessor.postProcessBeforeInitialization(instance,beanName);
             BeanWrapper beanWrapper = new BeanWrapper(instance);
             beanWrapper.setBeanPostProcessor(beanPostProcessor);
-            this.beanWrapperMap.put(beanName,beanWrapper);
             beanPostProcessor.postProcessAfterInitialization(instance,beanName);
-            populateBean(beanName,instance);
+            this.beanWrapperMap.put(beanName,beanWrapper);
             return this.beanWrapperMap.get(beanName).getWrapperInstance();
         }catch (Exception e){
             e.printStackTrace();
@@ -159,6 +161,16 @@ public class ApplicationContext implements BeanFactory {
         return null;
     }
 
+    private QAdvisedSupport instantAopConfig(BeanDefinition beanDefinition) throws Exception{
+        QAopConfig config = new QAopConfig();
+        config.setPointCut(this.beanDefinitionReader.getConfig().getProperty("pointCut"));
+        config.setAspectBefore(this.beanDefinitionReader.getConfig().getProperty("aspectBefore"));
+        config.setAspectClass(this.beanDefinitionReader.getConfig().getProperty("aspectClass"));
+        config.setAspectAfter(this.beanDefinitionReader.getConfig().getProperty("aspectAfter"));
+        config.setAspectAfterThrow(this.beanDefinitionReader.getConfig().getProperty("aspectAfterThrow"));
+        config.setAspectAfterThrowName(this.beanDefinitionReader.getConfig().getProperty("aspectAfterThrowName"));
+        return new QAdvisedSupport(config);
+    }
     //根据beanDefinition返回实例
     private Object instantionBean(BeanDefinition beanDefinition){
         Object instance = null;
@@ -169,12 +181,29 @@ public class ApplicationContext implements BeanFactory {
             }else{
                 Class<?> clazz = Class.forName(className);
                 instance = clazz.newInstance();
+                QAdvisedSupport config = instantAopConfig(beanDefinition);
+                config.setTargetClass(clazz);
+                config.setTarget(instance);
+                //如果符合切面原则，就代理
+                if(config.pointCutMatch()){
+                    instance = createProxy(config).getProxy();
+                    System.out.println(instance.getClass());
+                }
                 this.beanCacheMap.put(className,instance);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return instance;
+    }
+
+    private QAopProxy createProxy(QAdvisedSupport config) {
+        Class targetClass = config.getTargetClass();
+        if(targetClass.getInterfaces().length>0){
+            return new JdkProxy(config);
+        }else {
+            return new CglibProxy(config);
+        }
     }
 
 

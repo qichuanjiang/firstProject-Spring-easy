@@ -9,6 +9,7 @@ import com.qcj.spring.framework.annotation.Service;
 @Service
 public class DemoService implements IDemoService {
     public String get(String name){
+        System.out.println("我是业务代码");
         return "My name is "+name;
     }
 }
